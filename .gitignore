@@ -1,0 +1,17 @@
+.env*
+node_modules/
+
+# Ignores vpp backup and lock files
+
+*.vpp.bak_*
+*.vpp.lck
+
+IP-Adapter/
+
+__pycache__/
+
+models/
+
+sdxl_models/
+AI-Services/ailibs/__pycache__/style_transfer.cpython-312.pyc
+AI-Services/ailibs/__pycache__/style_transfer.cpython-312.pyc

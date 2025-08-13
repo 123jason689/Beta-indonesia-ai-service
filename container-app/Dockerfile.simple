@@ -1,0 +1,51 @@
+# Simplified Dockerfile using pre-built Python with CUDA support
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Python 3.11 (widely available) and dependencies
+RUN apt-get update && apt-get install -y \
+    python3.11 python3.11-pip python3.11-venv python3.11-dev \
+    libgl1-mesa-glx libglib2.0-0 wget curl git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3.11 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+WORKDIR /app
+
+# Copy requirements and install packages
+COPY requirements.txt .
+RUN python3.11 -m pip install --no-cache-dir --upgrade pip && \
+    # Install PyTorch with CUDA 12.1 support
+    python3.11 -m pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
+    # Install other packages
+    python3.11 -m pip install --no-cache-dir \
+    xformers \
+    diffusers \
+    transformers \
+    accelerate \
+    safetensors \
+    einops \
+    peft \
+    controlnet_aux \
+    ip_adapter \
+    azure-storage-blob \
+    -r requirements.txt
+
+# GPU optimizations
+ENV CUDA_VISIBLE_DEVICES=0
+ENV CUDA_DEVICE_ORDER=PCI_BUS_ID
+
+# Copy application code (already copied by deployment script)
+COPY ailibs/ ./ailibs/
+COPY RAG/ ./RAG/
+COPY Recommendation/ ./Recommendation/
+COPY chroma_db/ ./chroma_db/
+COPY .env .
+COPY multi_service_processor.py .
+
+# Set entrypoint
+ENTRYPOINT ["/opt/venv/bin/python3.11", "multi_service_processor.py"]

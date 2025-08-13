@@ -1,0 +1,51 @@
+# Azure Container App Configuration
+# This YAML defines the container app that will process style transfer jobs
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: style-transfer-processor
+spec:
+  replicas: 0  # Start with 0 replicas - scale based on queue length
+  selector:
+    matchLabels:
+      app: style-transfer-processor
+  template:
+    metadata:
+      labels:
+        app: style-transfer-processor
+    spec:
+      containers:
+      - name: processor
+        image: your-registry/style-transfer-processor:latest
+        env:
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: storage-secret
+              key: connection-string
+        resources:
+          requests:
+            nvidia.com/gpu: 1
+            memory: "8Gi"
+            cpu: "2"
+          limits:
+            nvidia.com/gpu: 1
+            memory: "16Gi"
+            cpu: "4"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: style-transfer-scaler
+spec:
+  scaleTargetRef:
+    name: style-transfer-processor
+  minReplicaCount: 0
+  maxReplicaCount: 3
+  triggers:
+  - type: azure-queue
+    metadata:
+      queueName: style-transfer-jobs
+      queueLength: '1'
+      connectionFromEnv: AZURE_STORAGE_CONNECTION_STRING

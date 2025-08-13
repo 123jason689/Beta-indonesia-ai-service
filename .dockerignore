@@ -1,0 +1,21 @@
+# Ignore local model and database caches
+models/
+chroma_db/
+*.sqlite3
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+simple/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Git directory
+.git/
